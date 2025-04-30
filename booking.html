@@ -66,6 +66,7 @@
       transition: background-color 0.3s ease;
       background-color: #fff;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      min-width: 0; /* لضمان عدم التقليص الزائد */
     }
     .calendar-day:hover {
       background-color: #fef3c7;
@@ -96,6 +97,26 @@
     .unavailable {
       background-color: #fee2e2;
       color: #991b1b;
+    }
+    /* Responsive styles for calendar on mobile */
+    @media (max-width: 768px) {
+      .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px; /* تقليل المسافة بين الأيام على الموبايل */
+      }
+      .calendar-day {
+        padding: 8px; /* تقليل الـ padding على الموبايل */
+        font-size: 0.9rem; /* تقليل حجم الخط */
+        min-width: 35px; /* ضمان حجم مناسب لكل يوم */
+        min-height: 35px; /* ضمان ارتفاع مناسب */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .calendar-grid > div {
+        min-width: 35px; /* ضمان حجم مناسب لأيام الأسبوع */
+        font-size: 0.8rem; /* تقليل حجم أيام الأسبوع */
+      }
     }
   </style>
 </head>
