@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم - فندق الأحلام</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.15/babel.min.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+      background-color: #f9fafb;
+    }
+    .content-container {
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100%;
+      background-color: #fff;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      transition: transform 0.3s ease;
+      z-index: 40;
+    }
+    .sidebar-open {
+      transform: translateX(0);
+    }
+    .sidebar-closed {
+      transform: translateX(100%);
+    }
+    .sidebar a, .sidebar button {
+      display: block;
+      padding: 10px;
+      margin: 10px 0;
+      color: #1f2937;
+      font-size: 1.1rem;
+      transition: background-color 0.3s ease;
+      position: relative;
+    }
+    .sidebar a:hover, .sidebar button:hover {
+      background-color: #fef3c7;
+      color: #ca8a04;
+    }
+    .table-container {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 300px;
+    }
+    .table-container th, .table-container td {
+      padding: 12px;
+      text-align: right;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+    .table-container th {
+      background-color: #facc15;
+      color: #fff;
+      font-weight: bold;
+    }
+    .table-container tr.unread {
+      background-color: #fef3c7;
+    }
+    .table-container tr:hover {
+      background-color: #f3f4f6;
+      cursor: pointer;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #facc15;
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .action-buttons {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    .action-buttons button {
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .notification-initial {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #facc15;
+      color: #fff;
+      padding: 15px 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 60;
+    }
+    .notification-realtime {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #facc15;
+      color: #fff;
+      padding: 15px 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 60;
+      opacity: 0;
+      animation: fadeInOut 5s forwards;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -20px); }
+      10% { opacity: 1; transform: translate(-50%, 0); }
+      90% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -20px); }
+    }
+    .notification-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: #dc2626;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .notification-count {
+      margin-right: 8px;
+    }
+    @media (min-width: 769px) {
+      .content-container {
+        margin-right: 270px;
+      }
+      .sidebar {
+        transform: translateX(0);
+      }
+      .table-container th, .table-container td {
+        padding: 12px;
+        font-size: 1rem;
+      }
+    }
+    @media (max-width: 768px) {
+      .content-container {
+        margin-right: 0;
+      }
+      .sidebar {
+        width: 200px;
+      }
+      .table-container {
+        margin: 10px 0;
+        padding: 10px;
+      }
+      .table-container th, .table-container td {
+        padding: 8px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function initializeAppWhenFirebaseLoaded() {
+      if (typeof window.firebase !== 'undefined' && window.firebase.firestore && window.firebase.auth) {
+        const firebaseConfig = {
+          apiKey: "AIzaSyB825If2ekOcL9WoITjy2Nag3kmNN9LYRc",
+          authDomain: "dreamhotel-f6a1c.firebaseapp.com",
+          projectId: "dreamhotel-f6a1c",
+          storageBucket: "dreamhotel-f6a1c.firebasestorage.app",
+          messagingSenderId: "781143280706",
+          appId: "1:781143280706:web:8fbc5e657f25c3ba1531db",
+          measurementId: "G-ZZDBV3KY16"
+        };
+
+        const app = window.firebase.initializeApp(firebaseConfig);
+        const auth = window.firebase.auth();
+        const db = window.firebase.firestore();
+
+        const LoginPage = ({ onLogin }) => {
+          const [email, setEmail] = useState('');
+          const [password, setPassword] = useState('');
+          const [error, setError] = useState('');
+
+          const handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+              await auth.signInWithEmailAndPassword(email, password);
+              onLogin();
+            } catch (error) {
+              setError('بيانات تسجيل الدخول غير صحيحة، حاول مرة أخرى.');
+            }
+          };
+
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+              <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+                <h2 className="text-3xl font-bold text-center mb-6 text-yellow-600">تسجيل الدخول</h2>
+                <form onSubmit={handleLogin}>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="البريد الإلكتروني"
+                    className="w-full p-4 mb-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    required
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="كلمة المرور"
+                    className="w-full p-4 mb-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-yellow-500 text-white px-8 py-4 rounded-full w-full font-semibold hover:bg-yellow-600 transition"
+                  >
+                    تسجيل الدخول
+                  </button>
+                  {error && (
+                    <p className="mt-5 text-center text-red-600">{error}</p>
+                  )}
+                </form>
+              </div>
+            </div>
+          );
+        };
+
+        const Dashboard = () => {
+          const [user, setUser] = useState(null);
+          const [currentSection, setCurrentSection] = useState('messages');
+          const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+          const [unreadMessages, setUnreadMessages] = useState(0);
+          const [unreadBookings, setUnreadBookings] = useState(0);
+          const [initialNotification, setInitialNotification] = useState('');
+          const [showInitialNotification, setShowInitialNotification] = useState(false);
+          const [realtimeNotifications, setRealtimeNotifications] = useState([]);
+          const [initialLoadTime, setInitialLoadTime] = useState(null);
+
+          useEffect(() => {
+            const unsubscribe = auth.onAuthStateChanged((user) => {
+              if (user) {
+                setUser(user);
+
+                // Fetch initial unread counts
+                const fetchInitialData = async () => {
+                  try {
+                    // Record the initial load time
+                    const loadTime = new Date().getTime();
+                    setInitialLoadTime(loadTime);
+
+                    const messagesSnapshot = await db.collection('contacts')
+                      .where('read', '==', false)
+                      .get();
+                    const bookingsSnapshot = await db.collection('bookings')
+                      .where('read', '==', false)
+                      .get();
+
+                    const initialMessagesCount = messagesSnapshot.size;
+                    const initialBookingsCount = bookingsSnapshot.size;
+
+                    setUnreadMessages(initialMessagesCount);
+                    setUnreadBookings(initialBookingsCount);
+
+                    // Show initial summary notification on page load or refresh
+                    if (initialMessagesCount > 0 || initialBookingsCount > 0) {
+                      const summary = `لديك ${initialMessagesCount > 0 ? `${initialMessagesCount} رسائل` : ''}${initialMessagesCount > 0 && initialBookingsCount > 0 ? ' و ' : ''}${initialBookingsCount > 0 ? `${initialBookingsCount} حجوزات` : ''} جديدة!`;
+                      setInitialNotification(summary);
+                      setShowInitialNotification(true);
+                      setTimeout(() => {
+                        setShowInitialNotification(false);
+                      }, 5000); // Hide after 5 seconds
+                    }
+
+                    // Set up real-time listeners for new changes only
+                    const messagesUnsub = db.collection('contacts')
+                      .where('read', '==', false)
+                      .onSnapshot((snapshot) => {
+                        setUnreadMessages(snapshot.size);
+                        snapshot.docChanges().forEach((change) => {
+                          if (change.type === 'added') {
+                            const messageData = change.doc.data();
+                            const messageTimestamp = messageData.createdAt ? new Date(messageData.createdAt).getTime() : 0;
+                            if (messageTimestamp > loadTime) {
+                              addRealtimeNotification('لديك رسالة جديدة!');
+                            }
+                          }
+                        });
+                      });
+
+                    const bookingsUnsub = db.collection('bookings')
+                      .where('read', '==', false)
+                      .onSnapshot((snapshot) => {
+                        setUnreadBookings(snapshot.size);
+                        snapshot.docChanges().forEach((change) => {
+                          if (change.type === 'added') {
+                            const bookingData = change.doc.data();
+                            const bookingTimestamp = bookingData.createdAt ? new Date(bookingData.createdAt).getTime() : 0;
+                            if (bookingTimestamp > loadTime) {
+                              addRealtimeNotification('لديك حجز جديد!');
+                            }
+                          }
+                        });
+                      });
+
+                    return () => {
+                      messagesUnsub();
+                      bookingsUnsub();
+                    };
+                  } catch (error) {
+                    console.error('Error fetching initial data:', error);
+                  }
+                };
+
+                fetchInitialData();
+              } else {
+                setUser(null);
+              }
+            });
+            return () => unsubscribe();
+          }, []);
+
+          const addRealtimeNotification = (message) => {
+            setRealtimeNotifications((prev) => [...prev, message]);
+            setTimeout(() => {
+              setRealtimeNotifications((prev) => prev.filter(notif => notif !== message));
+            }, 5000);
+          };
+
+          const handleLogout = async () => {
+            await auth.signOut();
+            setUser(null);
+          };
+
+          if (!user) {
+            return <LoginPage onLogin={() => setUser(auth.currentUser)} />;
+          }
+
+          return (
+            <div>
+              <button
+                className="md:hidden text-2xl fixed top-5 right-5 z-50"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              >
+                ☰
+              </button>
+              <div
+                className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'} md:sidebar-open z-40`}
+              >
+                <button
+                  className="md:hidden text-2xl mb-6"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  ✕
+                </button>
+                <h2 className="text-2xl font-bold mb-6 text-yellow-600">لوحة التحكم</h2>
+                <a
+                  onClick={() => {
+                    setCurrentSection('messages');
+                    setIsSidebarOpen(false);
+                  }}
+                  className={`${currentSection === 'messages' ? 'bg-yellow-100 text-yellow-600' : ''}`}
+                >
+                  رسائل العملاء
+                  {unreadMessages > 0 && (
+                    <span className="notification-dot"></span>
+                  )}
+                  {unreadMessages > 0 && <span className="ml-2 text-red-600 notification-count">{unreadMessages}</span>}
+                </a>
+                <a
+                  onClick={() => {
+                    setCurrentSection('bookings');
+                    setIsSidebarOpen(false);
+                  }}
+                  className={`${currentSection === 'bookings' ? 'bg-yellow-100 text-yellow-600' : ''}`}
+                >
+                  طلبات الحجز
+                  {unreadBookings > 0 && (
+                    <span className="notification-dot"></span>
+                  )}
+                  {unreadBookings > 0 && <span className="ml-2 text-red-600 notification-count">{unreadBookings}</span>}
+                </a>
+                <button onClick={handleLogout} className="mt-10 text-red-600">
+                  تسجيل الخروج
+                </button>
+              </div>
+              <div className="content-container">
+                {showInitialNotification && initialNotification && (
+                  <div className="notification-initial">{initialNotification}</div>
+                )}
+                {realtimeNotifications.map((notif, index) => (
+                  <div key={index} className="notification-realtime">{notif}</div>
+                ))}
+                {currentSection === 'messages' ? <MessagesSection /> : <BookingsSection />}
+              </div>
+            </div>
+          );
+        };
+
+        const MessagesSection = () => {
+          const [messages, setMessages] = useState([]);
+          const [selectedMessages, setSelectedMessages] = useState([]);
+          const [selectedMessage, setSelectedMessage] = useState(null);
+          const [confirmDelete, setConfirmDelete] = useState(null);
+
+          useEffect(() => {
+            const unsubscribe = db.collection('contacts')
+              .orderBy('createdAt', 'desc')
+              .onSnapshot((snapshot) => {
+                const messagesData = snapshot.docs.map(doc => ({
+                  id: doc.id,
+                  ...doc.data()
+                }));
+                setMessages(messagesData);
+              });
+            return () => unsubscribe();
+          }, []);
+
+          const markAsRead = async (message) => {
+            if (!message.read) {
+              await db.collection('contacts').doc(message.id).update({
+                read: true
+              });
+            }
+          };
+
+          const deleteMessage = async (id) => {
+            await db.collection('contacts').doc(id).delete();
+          };
+
+          const deleteSelectedMessages = async () => {
+            const batch = db.batch();
+            selectedMessages.forEach(id => {
+              const messageRef = db.collection('contacts').doc(id);
+              batch.delete(messageRef);
+            });
+            await batch.commit();
+            setSelectedMessages([]);
+          };
+
+          const toggleSelectMessage = (id) => {
+            if (selectedMessages.includes(id)) {
+              setSelectedMessages(selectedMessages.filter(msgId => msgId !== id));
+            } else {
+              setSelectedMessages([...selectedMessages, id]);
+            }
+          };
+
+          const selectAllMessages = () => {
+            if (selectedMessages.length === messages.length) {
+              setSelectedMessages([]);
+            } else {
+              setSelectedMessages(messages.map(msg => msg.id));
+            }
+          };
+
+          return (
+            <div className="table-container">
+              <h2 className="text-3xl font-bold mb-6 text-gray-800">رسائل العملاء</h2>
+              <div className="action-buttons">
+                <button
+                  onClick={selectAllMessages}
+                  className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+                >
+                  {selectedMessages.length === messages.length ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+                </button>
+                {selectedMessages.length > 0 && (
+                  <button
+                    onClick={() => setConfirmDelete('selectedMessages')}
+                    className="bg-red-500 text-white hover:bg-red-600"
+                  >
+                    حذف المحدد ({selectedMessages.length})
+                  </button>
+                )}
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>تحديد</th>
+                    <th>الاسم</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {messages.map(message => (
+                    <tr
+                      key={message.id}
+                      className={message.read ? '' : 'unread'}
+                      onClick={() => {
+                        setSelectedMessage(message);
+                        markAsRead(message);
+                      }}
+                    >
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedMessages.includes(message.id)}
+                          onChange={() => toggleSelectMessage(message.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td>{message.name}</td>
+                      <td>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete(message.id);
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          حذف
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {selectedMessage && (
+                <div className="modal">
+                  <div className="modal-content">
+                    <div className="modal-close" onClick={() => setSelectedMessage(null)}>
+                      <i className="fas fa-times"></i>
+                    </div>
+                    <h3 className="text-xl font-bold mb-4 text-yellow-600">تفاصيل الرسالة</h3>
+                    <p className="border-b border-gray-200 mb-2"><strong>الاسم:</strong> {selectedMessage.name}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>البريد الإلكتروني:</strong> {selectedMessage.email}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>رقم الهاتف:</strong> {selectedMessage.phone}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>تاريخ الإرسال:</strong> {new Date(selectedMessage.createdAt).toLocaleString('ar-EG')}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>الرسالة:</strong> {selectedMessage.message}</p>
+                    <button
+                      onClick={() => setConfirmDelete(selectedMessage.id)}
+                      className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              )}
+              {confirmDelete && (
+                <div className="modal">
+                  <div className="modal-content">
+                    <div className="modal-close" onClick={() => setConfirmDelete(null)}>
+                      <i className="fas fa-times"></i>
+                    </div>
+                    <h3 className="text-xl font-bold mb-4 text-red-600">تأكيد الحذف</h3>
+                    <p>هل أنت متأكد أنك تريد حذف {confirmDelete === 'selectedMessages' ? `${selectedMessages.length} رسائل محددة` : 'هذه الرسالة'}؟</p>
+                    <div className="flex justify-end gap-4 mt-6">
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+                      >
+                        إلغاء
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirmDelete === 'selectedMessages') {
+                            deleteSelectedMessages();
+                          } else {
+                            deleteMessage(confirmDelete);
+                          }
+                          setConfirmDelete(null);
+                          setSelectedMessage(null);
+                        }}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                      >
+                        تأكيد
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        const BookingsSection = () => {
+          const [bookings, setBookings] = useState([]);
+          const [selectedBookings, setSelectedBookings] = useState([]);
+          const [selectedBooking, setSelectedBooking] = useState(null);
+          const [confirmDelete, setConfirmDelete] = useState(null);
+
+          useEffect(() => {
+            const unsubscribe = db.collection('bookings')
+              .orderBy('createdAt', 'desc')
+              .onSnapshot((snapshot) => {
+                const bookingsData = snapshot.docs.map(doc => ({
+                  id: doc.id,
+                  ...doc.data()
+                }));
+                setBookings(bookingsData);
+              });
+            return () => unsubscribe();
+          }, []);
+
+          const markAsRead = async (booking) => {
+            if (!booking.read) {
+              await db.collection('bookings').doc(booking.id).update({
+                read: true
+              });
+            }
+          };
+
+          const deleteBooking = async (id) => {
+            await db.collection('bookings').doc(id).delete();
+          };
+
+          const deleteSelectedBookings = async () => {
+            const batch = db.batch();
+            selectedBookings.forEach(id => {
+              const bookingRef = db.collection('bookings').doc(id);
+              batch.delete(bookingRef);
+            });
+            await batch.commit();
+            setSelectedBookings([]);
+          };
+
+          const toggleSelectBooking = (id) => {
+            if (selectedBookings.includes(id)) {
+              setSelectedBookings(selectedBookings.filter(bookingId => bookingId !== id));
+            } else {
+              setSelectedBookings([...selectedBookings, id]);
+            }
+          };
+
+          const selectAllBookings = () => {
+            if (selectedBookings.length === bookings.length) {
+              setSelectedBookings([]);
+            } else {
+              setSelectedBookings(bookings.map(booking => booking.id));
+            }
+          };
+
+          return (
+            <div className="table-container">
+              <h2 className="text-3xl font-bold mb-6 text-gray-800">طلبات الحجز</h2>
+              <div className="action-buttons">
+                <button
+                  onClick={selectAllBookings}
+                  className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+                >
+                  {selectedBookings.length === bookings.length ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+                </button>
+                {selectedBookings.length > 0 && (
+                  <button
+                    onClick={() => setConfirmDelete('selectedBookings')}
+                    className="bg-red-500 text-white hover:bg-red-600"
+                  >
+                    حذف المحدد ({selectedBookings.length})
+                  </button>
+                )}
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>تحديد</th>
+                    <th>الاسم الكامل</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map(booking => (
+                    <tr
+                      key={booking.id}
+                      className={booking.read ? '' : 'unread'}
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        markAsRead(booking);
+                      }}
+                    >
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedBookings.includes(booking.id)}
+                          onChange={() => toggleSelectBooking(booking.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td>{booking.fullName}</td>
+                      <td>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete(booking.id);
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          حذف
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {selectedBooking && (
+                <div className="modal">
+                  <div className="modal-content">
+                    <div className="modal-close" onClick={() => setSelectedBooking(null)}>
+                      <i className="fas fa-times"></i>
+                    </div>
+                    <h3 className="text-xl font-bold mb-4 text-yellow-600">تفاصيل الحجز</h3>
+                    <p className="border-b border-gray-200 mb-2"><strong>الاسم الكامل:</strong> {selectedBooking.fullName}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>البريد الإلكتروني:</strong> {selectedBooking.email}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>رقم الهاتف:</strong> {selectedBooking.phone}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>الجنسية:</strong> {selectedBooking.nationality}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>الرقم القومي:</strong> {selectedBooking.nationalId}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>نوع الجناح:</strong> {selectedBooking.suite}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>تاريخ الوصول:</strong> {selectedBooking.checkIn}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>تاريخ المغادرة:</strong> {selectedBooking.checkOut}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>عدد الأفراد:</strong> {selectedBooking.guests}</p>
+                    <p className="border-b border-gray-200 mb-2"><strong>تاريخ الحجز:</strong> {new Date(selectedBooking.createdAt).toLocaleString('ar-EG')}</p>
+                    <button
+                      onClick={() => setConfirmDelete(selectedBooking.id)}
+                      className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              )}
+              {confirmDelete && (
+                <div className="modal">
+                  <div className="modal-content">
+                    <div className="modal-close" onClick={() => setConfirmDelete(null)}>
+                      <i className="fas fa-times"></i>
+                    </div>
+                    <h3 className="text-xl font-bold mb-4 text-red-600">تأكيد الحذف</h3>
+                    <p>هل أنت متأكد أنك تريد حذف {confirmDelete === 'selectedBookings' ? `${selectedBookings.length} حجوزات محددة` : 'هذا الحجز'}؟</p>
+                    <div className="flex justify-end gap-4 mt-6">
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+                      >
+                        إلغاء
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirmDelete === 'selectedBookings') {
+                            deleteSelectedBookings();
+                          } else {
+                            deleteBooking(confirmDelete);
+                          }
+                          setConfirmDelete(null);
+                          setSelectedBooking(null);
+                        }}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                      >
+                        تأكيد
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        const App = () => <Dashboard />;
+
+        ReactDOM.render(<App />, document.getElementById("root"));
+      } else {
+        setTimeout(initializeAppWhenFirebaseLoaded, 100);
+      }
+    }
+
+    initializeAppWhenFirebaseLoaded();
+  </script>
+</body>
+</html>

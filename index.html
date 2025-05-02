@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فندق الأحلام</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.15/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+    }
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeIn 1s forwards;
+    }
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .bg-carousel {
+      animation: changeBg 15s infinite;
+      background-size: cover;
+      background-position: center;
+    }
+    @keyframes changeBg {
+      0% { background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945'); }
+      33% { background-image: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb'); }
+      66% { background-image: url('https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd'); }
+      100% { background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945'); }
+    }
+    .btn-hover:hover {
+      transform: scale(1.05);
+      transition: transform 0.3s ease;
+      background-color: #ca8a04;
+    }
+    .sidebar {
+      transition: transform 0.3s ease;
+    }
+    .sidebar-open {
+      transform: translateX(0);
+    }
+    .sidebar-closed {
+      transform: translateX(100%);
+    }
+    .star {
+      color: #facc15;
+      font-size: 1.2rem;
+    }
+    section {
+      background: linear-gradient(to bottom, #f9fafb, #e5e7eb);
+      border-radius: 15px;
+      margin: 2rem 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .no-margin-left {
+      margin: 0px 20px 0px 20px !important;
+    }
+    /* Chat styles */
+    .chat-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 30;
+    }
+    .chat-header {
+      background-color: #facc15; /* لون أصفر غامق */
+      color: #fff;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .chat-header:hover {
+      transform: scale(1.1);
+      background-color: #eab308; /* لون أغمق لما نحط الموس */
+    }
+    .chat-header i {
+      font-size: 1.5rem;
+    }
+    .chat-options {
+      position: absolute;
+      bottom: 70px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .chat-options.open {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .chat-option {
+      background-color: #fff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    .chat-option:hover {
+      transform: scale(1.1);
+    }
+    .chat-option i {
+      font-size: 1.2rem;
+      color: #1f2937;
+    }
+    .chat-window {
+      background-color: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-window-header {
+      background-color: #facc15;
+      color: #fff;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    .chat-close {
+      background-color: transparent;
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .chat-close:hover {
+      background-color: #eab308;
+    }
+    .chat-body {
+      flex-grow: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background-color: #fefce8;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-messages {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      max-width: 80%;
+    }
+    .chat-message.bot {
+      align-self: flex-start;
+    }
+    .chat-message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .chat-message .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .chat-message .message-content {
+      background-color: #fff;
+      padding: 10px 15px;
+      border-radius: 15px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    .chat-message.user .message-content {
+      background-color: #facc15;
+      color: #fff;
+    }
+    .chat-message .message-time {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 5px;
+      text-align: right;
+    }
+    .chat-questions {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .chat-question {
+      background-color: #f3f4f6;
+      padding: 10px 15px;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-size: 0.9rem;
+    }
+    .chat-question:hover {
+      background-color: #e5e7eb;
+    }
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .chat-container {
+        bottom: 20px; /* أقرب للقاع */
+        right: 10px;
+      }
+      .chat-header {
+        width: 60px;
+        height: 60px;
+      }
+      .chat-window {
+        border-radius: 0; /* إزالة الـ border-radius عشان ياخد الشاشة كاملة */
+      }
+      .chat-window.open {
+        width: 100vw; /* عرض الشاشة كامل */
+        height: 100vh; /* ارتفاع الشاشة كامل */
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+      }
+      .chat-body {
+        height: calc(100vh - 60px); /* الارتفاع الكامل ناقص مساحة الـ header */
+      }
+      .chat-window-header {
+        font-size: 1.2rem;
+      }
+    }
+    @media (min-width: 769px) {
+      .chat-window.open {
+        width: 350px;
+        height: 450px;
+      }
+      .chat-body {
+        height: 350px; /* الارتفاع الكامل ناقص الـ header والـ questions */
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    // تهيئة Firebase بالقيم الصحيحة
+    const firebaseConfig = {
+      apiKey: "AIzaSyB825If2ekOcL9WoITjy2Nag3kmNN9LYRc",
+      authDomain: "dreamhotel-f6a1c.firebaseapp.com",
+      projectId: "dreamhotel-f6a1c",
+      storageBucket: "dreamhotel-f6a1c.firebasestorage.app",
+      messagingSenderId: "781143280706",
+      appId: "1:781143280706:web:8fbc5e657f25c3ba1531db",
+      measurementId: "G-ZZDBV3KY16"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const Navbar = () => {
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+      return (
+        <nav className="fixed top-0 w-full bg-white shadow-lg z-20">
+          <div className="container mx-auto px-6 py-5 flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-yellow-600 mr-8">فندق الأحلام</h1>
+            <button
+              className="md:hidden text-2xl"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              ☰
+            </button>
+            <div className="hidden md:flex items-center space-x-0 text-base">
+              <a href="#" className="text-gray-700 hover:text-yellow-500 transition px-4 ">الرئيسية</a>
+              <a href="booking.html" className="text-gray-700 hover:text-yellow-500 transition px-4">الحجز</a>
+              <a href="menu.html" className="text-gray-700 hover:text-yellow-500 transition px-4">قائمة الطعام</a>
+              <a href="#contact" className="text-gray-700 hover:text-yellow-500 transition px-4">تواصل معنا</a>
+              <div className="flex items-center space-x-5">
+               <div className="no-margin-left">
+                <a href="https://facebook.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                  <i className="fab fa-facebook-f"></i>
+                </a>
+                </div>
+                <a href="https://instagram.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                  <i className="fab fa-instagram"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div
+            className={`md:hidden fixed top-0 right-0 h-full w-64 bg-white shadow-lg sidebar ${
+              isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'
+            }`}
+          >
+            <div className="p-6">
+              <button
+                className="text-2xl mb-6"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                ✕
+              </button>
+              <div className="flex flex-col space-y-6 text-base">
+                <a href="#" className="text-gray-700 hover:text-yellow-500 transition">الرئيسية</a>
+                <a href="booking.html" className="text-gray-700 hover:text-yellow-500 transition">الحجز</a>
+                <a href="menu.html" className="text-gray-700 hover:text-yellow-500 transition">قائمة الطعام</a>
+                <a href="#contact" className="text-gray-700 hover:text-yellow-500 transition">تواصل معنا</a>
+                <div className="flex space-x-4 mt-4">
+                <div className="no-margin-left">
+                  <a href="https://facebook.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                    <i className="fab fa-facebook-f"></i>
+                  </a>
+                  </div>
+                  <div className="no-margin-left">
+                  <a href="https://instagram.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                    <i className="fab fa-instagram"></i>
+                  </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+      );
+    };
+
+    const Hero = () => (
+      <div className="relative h-screen flex items-center justify-center bg-carousel">
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div className="relative z-10 text-center text-white px-4">
+          <h1 className="text-5xl md:text-7xl font-bold mb-8 fade-in leading-loose">
+            مرحبًا بكم في <span className="text-yellow-400">فندق الأحلام</span>
+          </h1>
+          <p className="text-xl md:text-2xl mb-10 fade-in leading-loose">
+            حيث تتكامل الخدمة العالية بالمستوى العالمي مع الراحة
+          </p>
+          <a
+            href="booking.html"
+            className="bg-yellow-500 text-white px-10 py-4 rounded-full btn-hover text-lg font-semibold"
+          >
+            احجز الآن
+          </a>
+        </div>
+      </div>
+    );
+
+    const About = () => (
+      <section className="py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-8 fade-in text-gray-800">من نحن</h2>
+          <p className="text-lg max-w-3xl mx-auto fade-in text-gray-600 leading-relaxed">
+            فندق الأحلام هو ملاذكم لتجربة إقامة لا تُنسى. نجمع بين الفخامة العالمية والضيافة العربية الأصيلة لنقدم لكم أفضل الخدمات.
+          </p>
+          <div className="mt-10 grid md:grid-cols-2 gap-8">
+            <div className="fade-in bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-2xl font-semibold mb-3 text-yellow-600">رؤيتنا</h3>
+              <p className="text-gray-600 leading-relaxed">أن نكون الوجهة الأولى للإقامة الفاخرة في المنطقة.</p>
+            </div>
+            <div className="fade-in bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-2xl font-semibold mb-3 text-yellow-600">رسالتنا</h3>
+              <p className="text-gray-600 leading-relaxed">تقديم تجربة إقامة استثنائية تلبي كل توقعات ضيوفنا.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+
+    const History = () => (
+      <section className="py-16 bg-gray-100">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-8 fade-in text-gray-800">تاريخنا</h2>
+          <div className="max-w-4xl mx-auto text-gray-600 leading-relaxed">
+            <p className="mb-6 fade-in">
+              بدأت قصة فندق الأحلام في عام 1995، عندما قرر المؤسس الأستاذ خالد الراشد تحقيق حلمه بإنشاء ملاذ فاخر يجمع بين الأصالة والحداثة.
+            </p>
+            <p className="mb-6 fade-in">
+              على مساحة تزيد عن 10,000 متر مربع، بنينا هذا الصرح العظيم في قلب المدينة، ليكون شاهدًا على أجمل الذكريات لضيوفنا من كل أنحاء العالم.
+            </p>
+            <p className="fade-in">
+              منذ افتتاحه، أصبح فندق الأحلام رمزًا للضيافة الفاخرة، حيث يقدم تجربة فريدة تجمع بين الراحة، الجمال، والخدمة المميزة.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+
+    const Location = () => (
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-8 fade-in text-gray-800">موقع الفندق</h2>
+          <p className="text-lg text-center max-w-3xl mx-auto mb-10 fade-in text-gray-600 leading-relaxed">
+            يقع فندق الأحلام في قلب المدينة، بالقرب من المعالم السياحية الرئيسية مع إطلالات خلابة على المدينة.
+          </p>
+          <div className="w-full h-96 rounded-lg overflow-hidden shadow-lg fade-in">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.019020324496!2d-122.4194156846813!3d37.77492977975966!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085808c5e5e5e5f%3A0x5e5e5e5e5e5e5e5e!2sSan%20Francisco%2C%20CA%2C%20USA!5e0!3m2!1sen!2s!4v1634567890123"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+    );
+
+    const Reviews = () => {
+      const reviews = [
+        {
+          name: "أحمد محمد",
+          text: "تجربة رائعة، الخدمة ممتازة والغرف نظيفة!",
+          avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+          rating: 5,
+        },
+        {
+          name: "سارة علي",
+          text: "موقع مثالي وطاقم عمل ودود للغاية.",
+          avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+          rating: 4,
+        },
+      ];
+
+      const renderStars = (rating) => {
+        return Array.from({ length: 5 }, (_, i) => (
+          <span key={i} className={`star ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+            ★
+          </span>
+        ));
+      };
+
+      return (
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl font-bold text-center mb-8 fade-in text-gray-800">آراء العملاء</h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              {reviews.map((review, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-lg fade-in flex items-start space-x-4">
+                  <img src={review.avatar} alt={review.name} className="w-12 h-12 rounded-full object-cover" />
+                  <div>
+                    <div className="flex items-center space-x-1 mb-2">
+                      {renderStars(review.rating)}
+                    </div>
+                    <p className="text-lg mb-3 text-gray-600 leading-relaxed">"{review.text}"</p>
+                    <p className="font-semibold text-gray-800">{review.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Contact = () => {
+      const [formData, setFormData] = useState({ name: "", phone: "", email: "", message: "" });
+      const [status, setStatus] = useState("");
+
+      const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await db.collection('contacts').add({
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email,
+            message: formData.message,
+            createdAt: new Date().toISOString(),
+            read: false
+          });
+          setStatus("تم إرسال الرسالة بنجاح!");
+          setFormData({ name: "", phone: "", email: "", message: "" });
+        } catch (error) {
+          console.error('خطأ أثناء إرسال الرسالة:', error);
+          setStatus("حدث خطأ أثناء إرسال الرسالة، حاول مرة أخرى.");
+        }
+      };
+
+      return (
+        <section id="contact" className="py-16 bg-gray-100">
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl font-bold text-center mb-8 fade-in text-gray-800">تواصل معنا</h2>
+            <form onSubmit={handleSubmit} className="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-lg">
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="الاسم"
+                className="w-full p-4 mb-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="رقم الهاتف"
+                className="w-full p-4 mb-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="البريد الإلكتروني"
+                className="w-full p-4 mb-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+              <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                placeholder="رسالتك"
+                className="w-full p-4 mb-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                rows="5"
+                required
+              ></textarea>
+              <button
+                type="submit"
+                className="bg-yellow-500 text-white px-8 py-4 rounded-full btn-hover w-full font-semibold"
+              >
+                إرسال
+              </button>
+              {status && (
+                <p className={`mt-5 text-center ${status.includes('نجاح') ? 'text-green-600' : 'text-red-600'}`}>
+                  {status}
+                </p>
+              )}
+            </form>
+          </div>
+        </section>
+      );
+    };
+
+    const ChatBot = () => {
+      const [isOpen, setIsOpen] = useState(false);
+      const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+      const [messages, setMessages] = useState([
+        { text: "مرحبًا! كيف يمكنني مساعدتك اليوم؟", type: "answer" }
+      ]);
+
+      const faqs = [
+        { question: "ما هي سياسة الإلغاء؟", answer: "يمكنك إلغاء الحجز مجانًا حتى 48 ساعة قبل موعد الوصول." },
+        { question: "هل يوجد موقف سيارات؟", answer: "نعم، يوفر الفندق موقف سيارات مجاني لجميع الضيوف." },
+        { question: "هل تتوفر خدمة الواي فاي؟", answer: "نعم، الواي فاي متاح مجانًا في جميع أنحاء الفندق." },
+        { question: "ما هي أوقات تسجيل الوصول والمغادرة؟", answer: "تسجيل الوصول من الساعة 2:00 مساءً، وتسجيل المغادرة حتى الساعة 12:00 ظهرًا." },
+        { question: "هل يسمح باصطحاب الحيوانات الأليفة؟", answer: "عذرًا، لا نسمح باصطحاب الحيوانات الأليفة." }
+      ];
+
+      const handleQuestionClick = (faq) => {
+        setMessages([...messages, { text: faq.question, type: "question" }, { text: faq.answer, type: "answer" }]);
+      };
+
+      const toggleOptions = () => {
+        setIsOptionsOpen(!isOptionsOpen);
+      };
+
+      const openChat = () => {
+        setIsOptionsOpen(false);
+        setIsOpen(true);
+      };
+
+      return (
+        <div className="chat-container">
+          {!isOpen && (
+            <div className="chat-header" onClick={toggleOptions}>
+              <i className="fas fa-plus"></i>
+            </div>
+          )}
+          <div className={`chat-options ${isOptionsOpen ? 'open' : ''}`}>
+            <a href="tel:+201152030355" className="chat-option">
+              <i className="fas fa-phone-alt"></i>
+            </a>
+            <a href="https://wa.me/+201152030355" target="_blank" className="chat-option">
+              <i className="fab fa-whatsapp"></i>
+            </a>
+            <div className="chat-option" onClick={openChat}>
+              <i className="fas fa-comment-alt"></i>
+            </div>
+          </div>
+          {isOpen && (
+            <div className={`chat-window ${isOpen ? 'open' : ''}`}>
+              <div className="chat-window-header">
+                <span>محادثة فندق الأحلام</span>
+                <div className="chat-close" onClick={() => setIsOpen(false)}>
+                  <i className="fas fa-times"></i>
+                </div>
+              </div>
+              <div className="chat-body">
+                <div className="chat-messages">
+                  {messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`chat-message ${msg.type === 'question' ? 'user' : 'bot'}`}
+                    >
+                      <img
+                        src={msg.type === 'question' ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e' : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c'}
+                        alt="avatar"
+                        className="avatar"
+                      />
+                      <div className="message-content">
+                        {msg.text}
+                        <div className="message-time">{new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="chat-questions">
+                  {faqs.map((faq, index) => (
+                    <div
+                      key={index}
+                      className="chat-question"
+                      onClick={() => handleQuestionClick(faq)}
+                    >
+                      {faq.question}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const App = () => (
+      <div>
+        <Navbar />
+        <Hero />
+        <About />
+        <History />
+        <Location />
+        <Reviews />
+        <Contact />
+        <ChatBot />
+        <div className="py-8 bg-gray-800 text-white text-center">
+          <p>© 2025 فندق الأحلام. جميع الحقوق محفوظة.</p>
+        </div>
+      </div>
+    );
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>

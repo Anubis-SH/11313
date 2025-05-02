@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة الطعام - فندق الأحلام</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.15/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+    }
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeIn 1s forwards;
+    }
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .btn-hover:hover {
+      transform: scale(1.05);
+      transition: transform 0.3s ease;
+      background-color: #ca8a04;
+    }
+    .sidebar {
+      transition: transform 0.3s ease;
+    }
+    .sidebar-open {
+      transform: translateX(0);
+    }
+    .sidebar-closed {
+      transform: translateX(100%);
+    }
+    .no-margin-left {
+      margin: 0px 20px 0px 20px !important;
+    }
+    section {
+      background: linear-gradient(to bottom, #f9fafb, #e5e7eb);
+      border-radius: 15px;
+      margin: 2rem 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .menu-container {
+      padding: 2rem 1rem;
+      margin-top: 80px;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .menu-item {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    .menu-item:hover {
+      transform: translateY(-10px);
+    }
+    .menu-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    .menu-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    .menu-description {
+      font-size: 1rem;
+      color: #4b5563;
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+    }
+    .menu-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #facc15;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const Navbar = () => {
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+      return (
+        <nav className="fixed top-0 w-full bg-white shadow-lg z-20">
+          <div className="container mx-auto px-6 py-5 flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-yellow-600 mr-8">فندق الأحلام</h1>
+            <button
+              className="md:hidden text-2xl"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              ☰
+            </button>
+            <div className="hidden md:flex items-center space-x-0 text-base">
+              <a href="index.html" className="text-gray-700 hover:text-yellow-500 transition px-4">الرئيسية</a>
+              <a href="booking.html" className="text-gray-700 hover:text-yellow-500 transition px-4">الحجز</a>
+              <a href="menu.html" className="text-gray-700 hover:text-yellow-500 transition px-4">قائمة الطعام</a>
+              <a href="index.html#contact" className="text-gray-700 hover:text-yellow-500 transition px-4">تواصل معنا</a>
+              <div className="flex items-center space-x-5">
+                <div className="no-margin-left">
+                  <a href="https://facebook.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                    <i className="fab fa-facebook-f"></i>
+                  </a>
+                </div>
+                <a href="https://instagram.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                  <i className="fab fa-instagram"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div
+            className={`md:hidden fixed top-0 right-0 h-full w-64 bg-white shadow-lg sidebar ${
+              isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'
+            }`}
+          >
+            <div className="p-6">
+              <button
+                className="text-2xl mb-6"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                ✕
+              </button>
+              <div className="flex flex-col space-y-6 text-base">
+                <a href="index.html" className="text-gray-700 hover:text-yellow-500 transition">الرئيسية</a>
+                <a href="booking.html" className="text-gray-700 hover:text-yellow-500 transition">الحجز</a>
+                <a href="menu.html" className="text-gray-700 hover:text-yellow-500 transition">قائمة الطعام</a>
+                <a href="index.html#contact" className="text-gray-700 hover:text-yellow-500 transition">تواصل معنا</a>
+                <div className="flex space-x-4 mt-4">
+                  <div className="no-margin-left">
+                    <a href="https://facebook.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                      <i className="fab fa-facebook-f"></i>
+                    </a>
+                  </div>
+                  <div className="no-margin-left">
+                    <a href="https://instagram.com" target="_blank" className="text-gray-700 hover:text-yellow-500 text-sm">
+                      <i className="fab fa-instagram"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+      );
+    };
+
+    const Menu = () => (
+      <section className="menu-container">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-8 fade-in text-gray-800">قائمة الطعام</h2>
+          <div className="menu-grid">
+            <div className="menu-item fade-in">
+              <img src="https://cdn.pixabay.com/photo/2020/04/26/01/58/indian-5093242_1280.jpg" alt="كباب مشوي" className="menu-image" />
+              <h3 className="menu-title">كباب مشوي</h3>
+              <p className="menu-description">لحم بقري طري مشوي على الفحم مع توابل خاصة، يُقدم مع أرز بسمتي وسلطة طازجة. الإضافات: صوص الطحينة، خبز محمص.</p>
+              <p className="menu-price">50 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://static.srpcdigital.com/styles/1037xauto/public/2024-07/727982.jpg.webp" alt="كشري مصري" className="menu-image" />
+              <h3 className="menu-title">كشري مصري</h3>
+              <p className="menu-description">مزيج من العدس والأرز والمعكرونة مع صوص الطماطم الحار والبصل المقلي. الإضافات: عصير برتقال، خيار مخلل.</p>
+              <p className="menu-price">30 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://cdn.alweb.com/thumbs/recipes/article/fit727x484/%D8%B7%D8%B1%D9%8A%D9%82%D8%A9-%D8%B9%D9%85%D9%84-%D9%85%D8%AD%D8%B4%D9%8A-%D9%88%D8%B1%D9%82-%D8%A7%D9%84%D8%B9%D9%86%D8%A8-%D8%A8%D8%AF%D9%88%D9%86-%D9%84%D8%AD%D9%85.jpg" alt="محشي ورق عنب" className="menu-image" />
+              <h3 className="menu-title">محشي ورق عنب</h3>
+              <p className="menu-description">أوراق عنب محشية برز وحمص وخضروات طازجة، يُقدم مع زبادي محلي. الإضافات: ليمون، زيتون.</p>
+              <p className="menu-price">40 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://media.elwatannews.com/media/img/mediaarc/large/12655072901701328221.jpg" alt="فول مدمس" className="menu-image" />
+              <h3 className="menu-title">فول مدمس</h3>
+              <p className="menu-description">فول مصري تقليدي مطبوخ على نار هادئة مع الثوم والزيت، يُقدم مع طحينة وخبز. الإضافات: بيض مسلوق، فلفل حار.</p>
+              <p className="menu-price">25 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://www.justfood.tv/UserFiles/SHAW10122022.jpg" alt="شاورما دجاج" className="menu-image" />
+              <h3 className="menu-title">شاورما دجاج</h3>
+              <p className="menu-description">دجاج مشوي على الطريقة الشرقية مع الثوم والليمون، يُقدم مع تبولة وخبز عربي. الإضافات: صوص الثوم، بطاطس.</p>
+              <p className="menu-price">45 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6eZ_761nW9ChT1pcQ_7Sn2EhLY8hp250arJX20ZidIoSwrIZ8B5fi6ZeleUq74i97x8g&usqp=CAU" alt="كفتة بالفرن" className="menu-image" />
+              <h3 className="menu-title">كفتة بالفرن</h3>
+              <p className="menu-description">كفتة لحم مشوية بالفرن مع بطاطس وفلفل، يُقدم مع صوص الطماطم. الإضافات: أرز، سلطة خضراء.</p>
+              <p className="menu-price">55 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://www.maggiarabia.com/sites/default/files/styles/home_stage_944_531/public/srh_recipes/e59c09444892a72653813f130a2d9ae2.png?h=4f5b30f1&itok=xNm7fvdz" alt="مكرونة بالبشاميل" className="menu-image" />
+              <h3 className="menu-title">مكرونة بالبشاميل</h3>
+              <p className="menu-description">مكرونة بالبشاميل الكريمي مع دجاج وجبن موتزاريلا، يُقدم مع سلطة. الإضافات: صوص حار، خبز محمص.</p>
+              <p className="menu-price">40 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://www.shorouknews.com/uploadedimages/Sections/Egypt/original/%D8%B3%D9%85%D9%83%20%D9%85%D8%B4%D9%88%D9%8A%20%D8%A7%D9%84%D8%B4%D8%B1%D9%82%D9%8A%D8%A9.jpg" alt="سمك مشوي" className="menu-image" />
+              <h3 className="menu-title">سمك مشوي</h3>
+              <p className="menu-description">سمك طازج مشوي مع أعشاب البحر، يُقدم مع أرز أبيض وسلطة بحرية. الإضافات: ليمون، صوص تارتار.</p>
+              <p className="menu-price">70 جنيه</p>
+            </div>
+            <div className="menu-item fade-in">
+              <img src="https://cdn.al-ain.com/images/2018/2/14/47-081056-make-hamburger-at-home_700x400.jpeg" alt="هامبرجر" className="menu-image" />
+              <h3 className="menu-title">هامبرجر لحم</h3>
+              <p className="menu-description">هامبرجر لحم بقري طري مع جبنة، خس، وطماطم، يُقدم مع بطاطس مقلية. الإضافات: صوص كاتشب، بصل كراميل.</p>
+              <p className="menu-price">35 جنيه</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+
+    const App = () => (
+      <div>
+        <Navbar />
+        <Menu />
+        <div className="py-8 bg-gray-800 text-white text-center">
+          <p>© 2025 فندق الأحلام. جميع الحقوق محفوظة.</p>
+        </div>
+      </div>
+    );
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
